@@ -1,0 +1,199 @@
+﻿?Gitを使ってみよう(その３) - 共同作業してみよう
+
+ ?今日やること
+ ?GitHub のアカウントを作る
+ ?GitHub の練習用リポジトリを clone する
+ ?ローカルでコミットしてリモートに push してみる
+ ?ほかの人のコミットをリモートから pull してみる
+ ?コンフリクトの解決
+ 
+?関係ないけど今日使うもの
+
+https://chatstep.com/
+
+アカウント名を教えてもらうのに使い捨てのチャットを使います。
+
+ ?GitHub のアカウントを作る
+
+https://github.com/ を開いて、無料アカウントを作ってみましょう。 ユーザー名、Emailアドレス、パスワードを入力するだけで作れます。
+
+このページに画像つきで説明があるので参考にしてください。
+
+できたらアカウントをチャットで教えてください。
+
+ ?clone してみる
+
+適当な場所に練習用ディレクトリを新しく作り(下の例では git-work)、そこでリポジトリをクローンしてください。 $ はプロンプトのつもりで書いてますので、入力しないでくださいね。
+$ mkdir git-work
+$ cd git-work
+$ git clone https://ユーザー名@github.com/shunichi/git-practice.git
+
+ ユーザー名 のところは自分の GitHub のユーザー名を当てはめてください。ユーザー名@ は書かなくても clone できるのですけど、書いておくと後で push するときにユーザー名の入力が省けます。
+
+リポジトリ名と同じ名前のディレクトリが作られ、その中にローカルリポジトリ(.git)と作業ツリーができます。
+
+ ?push してみる
+
+clone でできたディレクトリ内に、自分のユーザー名をファイル名にして(例えば shunichi.txt)ファイルを作りましょう。お好きなテキストエディタ(メモ帳でもOK)を使ってください。内容はなんでもかまいませんので、適当に書いてください。
+
+GitHubで内容が見えるようにしたいので、ファイルの文字コードはUTF-8にしてください。(メモ帳の場合、「名前をつけて保存」のダイアログで文字コードを「UTF-8」にして保存してください。)
+$ git add shunichi.txt
+$ git commit -m "すばらしいファイルの追加"
+
+ これでローカルリポジトリにファイルが追加されました。
+
+ローカルリポジトリで加えた変更をリモートリポジトリに伝えましょう。
+ パスワードを聞かれるので入力してください。
+$ git push
+
+ 下のように push が拒否されることがあります。(rejected というのが拒否されましたという意味です)
+$ git push
+Username for 'https://github.com':
+Password for 'https://shunichi@github.com':
+To https://github.com/shunichi/git-practice.git
+ ! [rejected]        master -> master (non-fast-forward)
+error: failed to push some refs to 'https://github.com/shunichi/git-practice.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Merge the remote changes (e.g. 'git pull')
+hint: before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+
+ そんなときは pull してからもう一度リトライ。できるまで pull してリトライ。
+$ git pull
+$ git push
+
+ ?push が失敗する理由
+
+リモートリポジトリの同じブランチに、ローカルリポジトリにないコミットが追加されていると、失敗します。
+
+下の図では C,D のコミットがローカルリポジトリにありません。
+【push が失敗する場合の図】
+
+                  master
+                  v
+リモート A--B--C--D
+
+                  master
+                  v
+ローカル A--B--X--Y
+
+ -f オプションを指定すると、無理やり push することもできるのですが、そうするとリモートリポジトリの C, D が失われてしまいます。(説明の都合上、図では C, D が見えてますが master ブランチからは見えません。どこからも見えないコミットはそのうち削除されます。)
+【無理やり push した場合の図】
+
+                  master
+                  v
+               X--Y
+             /
+リモート A--B--C--D
+
+                  master
+                  v
+ローカル A--B--X--Y
+
+ git pull すると、リモートのコミットとローカルのコミットがマージされます。(Merge made by ... と出力されているのがわかると思います。)
+$ git pull
+remote: Counting objects: 4, done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 3 (delta 0), reused 3 (delta 0)
+Unpacking objects: 100% (3/3), done.
+From https://github.com/shunichi/git-practice
+   e88d567..c2aa0f2  master     -> origin/master
+Merge made by the 'recursive' strategy.
+ shunichi.txt |    2 ++
+ 1 file changed, 2 insertions(+)
+ create mode 100644 shunichi.txt
+
+ pull するとこんな感じになります。
+【pull した後の図】
+                  master
+                  v
+リモート A--B--C--D
+
+               X--Y
+             /      \
+ローカル A--B--C--D--M
+                     ^
+                     master
+
+ git log --graph --oneline を実行すると、どんな風にマージされたかを確認することができます。(下の出力例は上の図のコミットのされ方とは異なりますので注意)
+$ git log --graph --oneline
+*   f71aa0f Merge branch 'master' of https://github.com/shunichi/git-practice
+|\  
+| * c2aa0f2 俺様のファイルを追加
+* | 024d3db すごいファイルの追加
+|/  
+* e88d567 README 追記
+* 6f3ccb1 初めてのコミット
+
+ Subversion では、コミット時にサーバー側でマージが行われますので、コミット(Git の push に相当)が失敗することは少ないです。(たまには失敗しますけど)
+
+Git の場合は、サーバー側で勝手にマージはされません。リモートリポジトリから最新のコミットを pull してから push しましょう。ちょっと面倒ですね。
+
+Git はローカルリポジトリにコミットできるので、リモートリポジトリに push する頻度は少なくなるはずです。だから、push 前に一度 pull すれば、何度も push が失敗するということは少ないと思います。(本格的に多人数で使ったことはないので、実際のところは良くわかりませんけどね。)
+
+ ?コンフリクト(衝突)
+
+同じファイルの同じような場所を複数人で編集すると、pullの際の自動マージが失敗します(このことをコンフリクトと言う)。人の手で解決しないといけません。
+
+ためしにわざとコンフリクトを起こしてみましょう。
+
+まず pull して最新の状態にしてください。その後、お互いに自分のファイルと隣の人のファイルの両方を編集して、ローカルリポジトリに commit して、リモートリポジトリに push してみましょう。
+$ git commit -am "感動的な文章を追加"   # -m でなく -am とすると add もしてくれる
+$ git pull
+$ git push
+
+ タイミングによっては pull の時点でマージに失敗するかもしれません。 CONFLICT と書いてある行にコンフリクトしたファイル名が表示されています。
+ (失敗しなかったら、相方が自分のファイルを push 完了するまでしばらくお待ちください。)
+$ git pull
+remote: Counting objects: 5, done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 3 (delta 0), reused 3 (delta 0)
+Unpacking objects: 100% (3/3), done.
+From https://github.com/shunichi/git-practice
+   c2aa0f2..d3f170a  master     -> origin/master
+Auto-merging shunichi.txt
+CONFLICT (content): Merge conflict in shunichi.txt
+Automatic merge failed; fix conflicts and then commit the result.
+
+ git status を実行してみると Unmerged paths: というようにマージされていないファイルが表示されます。
+$ git status
+# On branch master
+# Your branch and 'origin/master' have diverged,
+# and have 3 and 1 different commit each, respectively.
+#
+# Unmerged paths:
+#   (use "git add/rm <file>..." as appropriate to mark resolution)
+#
+#       both modified:      shunichi.txt
+#
+no changes added to commit (use "git add" and/or "git commit -a")
+
+ さてコンフリクトの解消方法ですが、まずはコンフリクトが起きたファイルをエディタで開いてください。
+あああ
+<<<<<<< HEAD
+おそるべき編集。
+=======
+すごい編集。
+>>>>>>> d3f170a2865b21d5ab4d0dae4d258c9be5fb4e05
+いいい
+
+ <<<<<<< の行から ======= の行までが自分が変更した内容で、 ======= の行から >>>>>>> の行までが他の人が変更した内容です。それらをいい感じに修正してください。
+
+いい感じとは、例えばC++のソースだったら正しく動作するように修正することです。自分の編集内容を優先させるのか、相手を優先させるのか、あるいは両方を混ぜるのか、ケースバイケースで判断してください。
+あああ
+おそるべきすごい編集。
+いいい
+
+ ファイルを保存してから、 git add するとコンフリクトを解決したことになります。
+$ git add shunichi.txt
+$ git commit -m "マージしたよ。"
+
+ ちなみに、よくわからなくなったら pull で起きたマージを取り消せます。
+$ git merge --abort
+
+ もう一度 pull すれば、またコンフリクトが起きるので、やり直しましょう。
+
+ ?まとめ
+ ?git clone でリモートリポジトリをローカルに複製できる
+ ?多人数で Git を使っているときは pull してから push する
+ ?pull で自動マージに失敗したら手動でコンフリクトを解消して add して commit
