@@ -197,3 +197,5 @@ $ git merge --abort
  git clone でリモートリポジトリをローカルに複製できる
  多人数で Git を使っているときは pull してから push する
  pull で自動マージに失敗したら手動でコンフリクトを解消して add して commit
+
+参照アドレス：https://github.com/shunichi/seminar/blob/master/git-02.md
